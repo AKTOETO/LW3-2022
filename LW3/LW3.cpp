@@ -23,18 +23,37 @@
 
 using namespace std;
 
+/********************************
+*			ДЛЯ КОНСОЛИ			*
+********************************/
+
 // убрать комментарий, если нужна
 // пошаговая печать массивов
 #define EVERY_STEP_PRINT
 
+// количество таблиц в консоли
+#define NUMB_OF_TABLES 10
+
+/********************************
+*			ДЛЯ МАССИВА			*
+********************************/
 // минимальное и максимальное значение
 // для чисел в массиве
 #define MIN_VALUE 10
 #define MAX_VALUE 20
 
-// для генерации последовательностей
+// минимальный и максимальный
+// размер массива
+#define MIN_ARR_SIZE 10000
+#define MAX_ARR_SIZE 1000000
+
+/********************************
+*	ДЛЯ ПОСЛЕДОВАТЕЛЬНОСТЕЙ		*
+********************************/
+
 // шаг чисел при генерации последовательности
 #define STEP 1
+
 // максимальное значение при генерации чисел
 #define MAX_GENERATE MAX_VALUE
 
@@ -45,22 +64,20 @@ struct help_data
 	int num_of_swap;	// число перемещений
 };
 
+/****************************************************************
+*              П Р О Т О Т И П Ы   Ф У Н К Ц И Й                *
+****************************************************************/
+
+/****************************************************************
+*         В С П О М О Г А Т Е Л Ь Н Ы Е  Ф У Н К Ц И Й          *
+****************************************************************/
+
 // возвращение случайного значения из 
 // интервала (min, max)
 template<typename T>
 T rand_num(T min, T max)
 {
 	return rand() % (max - min) + min;
-}
-
-// рандомизация значений массива
-template<typename T>
-void randomize_array(T* arr, int low, int high)
-{
-	for (int i = low; i < high; i++)
-	{
-		arr[i] = rand_num(MIN_VALUE, MAX_VALUE);
-	}
 }
 
 // копирование массива
@@ -95,9 +112,40 @@ void print_arr(
 	stream << '\n';
 }
 
-//***********************************************************//
-// Г Е Н Е Р А Ц И Я   П О С Л Е Д О В А Т Е Л Ь Н О С Т Е Й //
-//***********************************************************//
+// ввод и проверка значений
+template<typename T>
+T input_and_check(T _min, T _max,
+	const char* welcome_str, const char* err_str)
+{
+	// размер массива
+	T num;
+
+	// вывод сообщения
+	cout << welcome_str << "\n";
+	cin >> num;
+
+	// если было введено не то
+	if (num > _max || num < _min) {
+		// если была введена не цифра
+		if (cin.fail())
+		{
+			cin.clear();
+			cin.ignore(INT_MAX, '\n');
+		}
+
+		// отчистка консоли
+		system("cls");
+		cout << err_str << "\n";
+
+		// рекурсивное обращение
+		num = input_and_check(_min, _max, welcome_str, err_str);
+	}
+	return num;
+}
+
+/****************************************************************
+*	Г Е Н Е Р А Ц И Я   П О С Л Е Д О В А Т Е Л Ь Н О С Т Е Й	*
+****************************************************************/
 
 // чтение массива
 void read_arr(int* arr, int low, int high)
@@ -140,40 +188,19 @@ void f2(T* arr, int low, int high)
 	}
 }
 
-// ввод и проверка значений
+// рандомизация значений массива
 template<typename T>
-T input_and_check(T _min, T _max,
-	const char* welcome_str, const char* err_str)
+void randomize_array(T* arr, int low, int high)
 {
-	// размер массива
-	T num;
-
-	// вывод сообщения
-	cout << welcome_str << "\n";
-	cin >> num;
-
-	// если было введено не то
-	if (num > _max || num < _min) {
-		// если была введена не цифра
-		if (cin.fail())
-		{
-			cin.clear();
-			cin.ignore(INT_MAX, '\n');
-		}
-
-		// отчистка консоли
-		system("cls");
-		cout << err_str << "\n";
-
-		// рекурсивное обращение
-		num = input_and_check(_min, _max, welcome_str, err_str);
+	for (int i = low; i < high; i++)
+	{
+		arr[i] = rand_num(MIN_VALUE, MAX_VALUE);
 	}
-	return num;
 }
 
-//**************************************************************//
-//				C О Р Т И Р О В К А   В Ы Б О Р О М				//
-//**************************************************************//
+/****************************************************************
+*				C О Р Т И Р О В К А   В Ы Б О Р О М				*
+****************************************************************/
 
 void selection_sort(int* arr, int low, int high, help_data& data)
 {
@@ -225,9 +252,9 @@ void selection_sort(int* arr, int low, int high, help_data& data)
 	data.num_of_comp++;
 }
 
-//**************************************************************//
-//				Б Ы С Т Р А Я   С О Р Т И Р О В К А				//
-//**************************************************************//
+/****************************************************************
+*				Б Ы С Т Р А Я   С О Р Т И Р О В К А				*
+****************************************************************/
 
 // функция перераспределяющая элементы 
 int partition(int* arr, int low, int high, help_data& data)
@@ -239,13 +266,13 @@ int partition(int* arr, int low, int high, help_data& data)
 #endif // EVERY_STEP_PRINT
 
 	// опорный элемент
-	int pivot = arr[high];
+	int pivot = arr[high - 1];
 
 	// индекс, в которм в конце алгоритма
 	// окажется опорный элемент
 	int out_pivot_ind = low;
 
-	for (int i = low; i < high; i++)
+	for (int i = low; i < high - 1; i++)
 	{
 		data.num_of_comp++;
 
@@ -260,7 +287,9 @@ int partition(int* arr, int low, int high, help_data& data)
 			// если нужна пошаговая печать
 #ifdef EVERY_STEP_PRINT
 			cout << "\t" << setfill(' ') << setw(3) << i << " с "
-				<< setfill(' ') << setw(2) << out_pivot_ind - 1 << " индекс: ";
+				<< setfill(' ') << setw(2) <<
+				(out_pivot_ind == 0 ? out_pivot_ind : out_pivot_ind - 1)
+				<< " индекс: ";
 			print_arr(arr, low, high);
 #endif // EVERY_STEP_PRINT
 		}
@@ -269,10 +298,13 @@ int partition(int* arr, int low, int high, help_data& data)
 
 	// ставим опорный элемент в позицию out_ind
 	data.num_of_swap++;
-	swap(arr[out_pivot_ind], arr[high]);
+	swap(arr[out_pivot_ind], arr[high - 1]);
+
 #ifdef EVERY_STEP_PRINT
-	cout << "\t" << setfill(' ') << setw(3) << high << " с "
-		<< setfill(' ') << setw(2) << out_pivot_ind - 1 << " индекс: ";
+	cout << "\t" << setfill(' ') << setw(3) << high - 1 << " с "
+		<< setfill(' ') << setw(2) <<
+		(out_pivot_ind == 0 ? out_pivot_ind : out_pivot_ind - 1)
+		<< " индекс: ";
 	print_arr(arr, low, high);
 #endif // EVERY_STEP_PRINT
 
@@ -312,6 +344,10 @@ void quick_sort(int* arr, int low, int high, help_data& data)
 	}
 }
 
+/****************************************************************
+*				О С Н О В Н Ы Е   Ф У Н К Ц И И 				*
+****************************************************************/
+
 // функция позволяет увидеть пошаговую работу
 // алгоритма сортировки и выводит число сравнений
 // и перестановок
@@ -350,8 +386,6 @@ void first_part()
 		break;
 	}
 
-	//print_arr(arr, 0, size);
-
 	// копирование массива. необходимо для вывода
 	copy_arr(arr, arr_deaf, 0, size);
 
@@ -380,18 +414,34 @@ void first_part()
 	}
 
 	// вывод результатов
-	cout << "\nНачальный массив: ";
+	cout << "\n\nНачальный массив: ";
 	print_arr(arr_deaf, 0, size);
 
-	cout << "Конечный массив: ";
+	cout << "Конечный  массив: ";
 	print_arr(arr, 0, size);
 
-	cout << "Число сравнений: " << data.num_of_comp;
-	cout << "\nЧисло пересылок: " << data.num_of_swap;
+	cout << "Число  сравнений: " << data.num_of_comp << '\n';
+	cout << "Число  пересылок: " << data.num_of_swap << '\n';
 
 	// очистка памяти
 	delete[] arr;
 	delete[] arr_deaf;
+}
+
+// функция генерирует массивы размерами
+// 1000 10000 100000 1000000
+// и сортирует их двумя алгоритмами сортировки
+void second_part()
+{
+	// 10 раз выполняем генерацию массива и
+	// двух сортировок
+	for (
+		int i = MIN_ARR_SIZE; i <= MAX_ARR_SIZE;
+		i += (MAX_ARR_SIZE - MIN_ARR_SIZE) / NUMB_OF_TABLES
+		)
+	{
+
+	}
 }
 
 /****************************************************************
@@ -402,36 +452,12 @@ int main()
 {
 	setlocale(LC_ALL, "ru");
 	srand(time(NULL));
+
 	first_part();
-	//// для теста сортировки
-	//int* arr;
-	//int size;
 
-	////cin >> size;
-	//size = 15;
+	second_part();
 
-	//arr = new int[size];
-
-
-	//help_data data = { 0,0 };
-
-	////генерация последовательности
-	////read_arr(arr, 0, size);
-	//randomize_array(arr, 0, size);
-	////f1(arr, 0, size);
-	////f2(arr, 0, size);
-	//print_arr(arr, 0, size);
-
-	//// сортировка
-	////selection_sort(arr, 0, size, data);
-	//quick_sort(arr, 0, size, data);
-
-	//// вывод
-	//cout << setfill('=') << setw(30) << '\n';
-	//print_arr(arr, 0, size);
-
-	//cout << "число сравнений: " << data.num_of_comp;
-	//cout << "\nчисло пересылок: " << data.num_of_swap;
+	return 0;
 }
 
 
