@@ -16,8 +16,6 @@
 *		2.	уже отсортированных последовательностей в возрастающем 		*
 *		и убывающем порядке (лучший и худший случаи для					*
 *		выполнения сортировки).											*
-*																		*
-*																		*
 \***********************************************************************/
 
 #include <iostream>
@@ -44,9 +42,9 @@ T rand_num(T min, T max)
 
 // рандомизация значений массива
 template<typename T>
-void randomize_array(T* arr, int size)
+void randomize_array(T* arr, int low, int high)
 {
-	for (int i = 0; i < size; i++)
+	for (int i = low; i <= high; i++)
 	{
 		arr[i] = rand_num(MIN_VALUE, MAX_VALUE);
 	}
@@ -54,20 +52,25 @@ void randomize_array(T* arr, int size)
 
 // печать массива в поток
 template<typename T>
-void print_arr(T* arr, int size, ostream& stream = cout)
+void print_arr(
+	T* arr,					// массив
+	int low = 0,			// индекс, с которого начинается вывод
+	int high = 1,			// индекс, на котром кончается вывод
+	ostream& stream = cout	// поток вывода
+)
 {
 	// вывод элементов массива
-	for (int i = 0; i < size; i++)
+	for (int i = low; i <= high; i++)
 	{
 		stream << arr[i] << ' ';
 	}
-	cout << '\n';
+	stream << '\n';
 }
 
 // чтение массива
-void read_arr(int* arr, int size)
+void read_arr(int* arr, int low, int high)
 {
-	for (int i = 0; i < size; i++)
+	for (int i = low; i <= high; i++)
 	{
 		cin >> arr[i];
 	}
@@ -77,19 +80,19 @@ void read_arr(int* arr, int size)
 //	CОРТИРОВКА ВЫБОРОМ	//
 //======================//
 
-void selection_sort(int* arr, int size)
+void selection_sort(int* arr, int low, int high)
 {
 	// проходимся по всем элементам массива
 	// кроме последнего он уже будет в
 	// нужном порядке, когда мы дойдем до него
-	for (int i = 0; i < size - 1; i++)
+	for (int i = low; i < high; i++)
 	{
 		// индекс наименьшего элемента
 		int smallestIndex = i;
 
 		// ищем еще более меньший элемент,
 		// чем под индексом smallestIndex
-		for (int j = i + 1; j < size; j++)
+		for (int j = i + 1; j <= high; j++)
 		{
 			// если был найдем элемент,
 			// который меньше элемнта под
@@ -105,7 +108,7 @@ void selection_sort(int* arr, int size)
 
 		// если нужна пошаговая печать
 #ifdef EVERY_STEP_PRINT
-		print_arr(arr, size);
+		print_arr(arr, low, high);
 #endif // EVERY_STEP_PRINT
 	}
 }
@@ -117,56 +120,95 @@ void selection_sort(int* arr, int size)
 // функция перераспределяющая элементы 
 int partition(int* arr, int low, int high)
 {
-	int pivot_ind = low;
+#ifdef EVERY_STEP_PRINT
+	cout << "\nлевый: " << low << " правый: " << high << " partition: \n";
+	cout << "\tдо изменений: ";
+	print_arr(arr, low, high);
+#endif // EVERY_STEP_PRINT
+
+	// опорный элемент
+	int pivot = arr[high];
+
+	// индекс, в которм в конце алгоритма
+	// окажется опорный элемент
+	int out_pivot_ind = low;
+
 	for (int i = low; i < high; i++)
 	{
-		if (arr[i] <= arr[high])
+		// если текущий элемент меньше опорного
+		if (arr[i] <= pivot)
 		{
-			swap(arr[pivot_ind++], arr[i]);	
+			// меняем местами текущий элемент 
+			// и элемент под индексом out_ind
+			swap(arr[out_pivot_ind++], arr[i]);
+			// если нужна пошаговая печать
+#ifdef EVERY_STEP_PRINT
+			cout << "\t" << setfill(' ') << setw(5) << i << " индекс: ";
+			print_arr(arr, low, high);
+#endif // EVERY_STEP_PRINT
 		}
-		print_arr(arr, 6);
 	}
-	swap(arr[pivot_ind], arr[high]);
 
-	print_arr(arr, 6);
-	cout << "====\n";
-	return pivot_ind;
+	// ставим опорный элемент в позицию out_ind
+	swap(arr[out_pivot_ind], arr[high]);
+
+	// если нужна пошаговая печать
+#ifdef EVERY_STEP_PRINT
+	cout << "\tпосле измен.: ";
+	print_arr(arr, low, high);
+#endif // EVERY_STEP_PRINT
+	return out_pivot_ind;
 }
 
 // быстрая сортировка
 void quick_sort(int* arr, int low, int high)
 {
+	// если минимальный индекс меньше максимального
 	if (low < high)
 	{
-		int part = partition(arr, low, high);
-		quick_sort(arr, low, part);
-		quick_sort(arr, part + 1, high);
+		// переставляем элементы относительно 
+		// определенного индекса, возвращаем
+		// этот индекс
+		int pivot_ind = partition(arr, low, high);
+
+		// переставляем левую часть массива
+		// относительно индекса ключевого элемента
+		quick_sort(arr, low, pivot_ind - 1);
+
+		// переставляем правую часть массива
+		// относительно индекса ключевого элемента
+		quick_sort(arr, pivot_ind + 1, high);
 
 		// если нужна пошаговая печать
 #ifdef EVERY_STEP_PRINT
-		cout << "out: ";
-		print_arr(arr, 6);
+		cout << "\nлевый: " << low << " правый: " << high << " quick sort: ";
+		print_arr(arr, low, high);
 #endif // EVERY_STEP_PRINT
 	}
 }
 
 int main()
 {
+	setlocale(LC_ALL, "ru");
+	srand(time(NULL));
+
 	// для теста сортировки
 	int* arr;
 	int size;
 
-	cin >> size;
+	//cin >> size;
+	size = 15;
 
 	arr = new int[size];
-	
-	read_arr(arr, size);
 
-	//randomize_array(arr, size);
-	//selection_sort(arr, size);
-	quick_sort(arr, 0, size - 1);
+	//read_arr(arr, size);
+
+	randomize_array(arr,0, size);
+	print_arr(arr, 0, size);
+	selection_sort(arr, 0,size);
+	//quick_sort(arr, 0, size - 1);
 
 	cout << setfill('=') << setw(30) << '\n';
 
-	print_arr(arr, size);
+	print_arr(arr, 0, size);
 }
