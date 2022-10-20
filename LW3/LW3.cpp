@@ -20,6 +20,8 @@
 
 #include <iostream>
 #include <iomanip>
+#include <chrono>
+#include <algorithm>
 
 using namespace std;
 
@@ -29,10 +31,13 @@ using namespace std;
 
 // убрать комментарий, если нужна
 // пошаговая печать массивов
-#define EVERY_STEP_PRINT
+//#define EVERY_STEP_PRINT
 
 // количество таблиц в консоли
 #define NUMB_OF_TABLES 10
+
+// заполнение len элементов элементом symb
+#define OUT_W(symb, len) fixed << setfill(symb) << setw(len)
 
 /********************************
 *			ДЛЯ МАССИВА			*
@@ -40,12 +45,12 @@ using namespace std;
 // минимальное и максимальное значение
 // для чисел в массиве
 #define MIN_VALUE 10
-#define MAX_VALUE 20
+#define MAX_VALUE 2000000
 
 // минимальный и максимальный
 // размер массива
-#define MIN_ARR_SIZE 10000
-#define MAX_ARR_SIZE 1000000
+#define MIN_ARR_SIZE 1000
+#define MAX_ARR_SIZE 20000
 
 /********************************
 *	ДЛЯ ПОСЛЕДОВАТЕЛЬНОСТЕЙ		*
@@ -60,9 +65,12 @@ using namespace std;
 // необходима для функций сортировки
 struct help_data
 {
-	int num_of_comp;	// число сравнений
+	unsigned long num_of_comp;	// число сравнений
 	int num_of_swap;	// число перемещений
 };
+
+// тип данных NS
+typedef chrono::milliseconds TTIME;
 
 /****************************************************************
 *              П Р О Т О Т И П Ы   Ф У Н К Ц И Й                *
@@ -74,14 +82,14 @@ struct help_data
 
 // возвращение случайного значения из 
 // интервала (min, max)
-template<typename T>
+template<typename T = int>
 T rand_num(T min, T max)
 {
 	return rand() % (max - min) + min;
 }
 
 // копирование массива
-template<typename T>
+template<typename T = int>
 void copy_arr(
 	T* arr1,	// источник данных
 	T* arr2,	// место копирования данных
@@ -96,7 +104,7 @@ void copy_arr(
 }
 
 // печать массива в поток
-template<typename T>
+template<typename T = int>
 void print_arr(
 	T* arr,					// массив
 	int low = 0,			// индекс, с которого начинается вывод
@@ -113,7 +121,7 @@ void print_arr(
 }
 
 // ввод и проверка значений
-template<typename T>
+template<typename T = int>
 T input_and_check(T _min, T _max,
 	const char* welcome_str, const char* err_str)
 {
@@ -147,17 +155,8 @@ T input_and_check(T _min, T _max,
 *	Г Е Н Е Р А Ц И Я   П О С Л Е Д О В А Т Е Л Ь Н О С Т Е Й	*
 ****************************************************************/
 
-// чтение массива
-void read_arr(int* arr, int low, int high)
-{
-	for (int i = low; i < high; i++)
-	{
-		cin >> arr[i];
-	}
-}
-
 // упорядочная функция по возрастанию
-template<typename T>
+template<typename T = int>
 void f1(T* arr, int low, int high)
 {
 	//k, b - коэффициенты прямой
@@ -173,7 +172,7 @@ void f1(T* arr, int low, int high)
 }
 
 // упорядочная функция по убыванию
-template<typename T>
+template<typename T = int>
 void f2(T* arr, int low, int high)
 {
 	//k, b - коэффициенты прямой
@@ -189,7 +188,7 @@ void f2(T* arr, int low, int high)
 }
 
 // рандомизация значений массива
-template<typename T>
+template<typename T = int>
 void randomize_array(T* arr, int low, int high)
 {
 	for (int i = low; i < high; i++)
@@ -198,11 +197,22 @@ void randomize_array(T* arr, int low, int high)
 	}
 }
 
+// чтение массива
+template<typename T = int>
+void read_arr(T* arr, int low, int high)
+{
+	for (int i = low; i < high; i++)
+	{
+		cin >> arr[i];
+	}
+}
+
 /****************************************************************
 *				C О Р Т И Р О В К А   В Ы Б О Р О М				*
 ****************************************************************/
 
-void selection_sort(int* arr, int low, int high, help_data& data)
+template<typename T = int>
+void selection_sort(T* arr, int low, int high, help_data& data)
 {
 #ifdef EVERY_STEP_PRINT
 	cout << "\nлевый: " << low << " правый: " << high << " partition: \n";
@@ -257,7 +267,8 @@ void selection_sort(int* arr, int low, int high, help_data& data)
 ****************************************************************/
 
 // функция перераспределяющая элементы 
-int partition(int* arr, int low, int high, help_data& data)
+template<typename T = int>
+int partition(T* arr, int low, int high, help_data& data)
 {
 #ifdef EVERY_STEP_PRINT
 	cout << "\nлевый: " << low << " правый: " << high << " partition: \n";
@@ -266,7 +277,7 @@ int partition(int* arr, int low, int high, help_data& data)
 #endif // EVERY_STEP_PRINT
 
 	// опорный элемент
-	int pivot = arr[high - 1];
+	T pivot = arr[high - 1];
 
 	// индекс, в которм в конце алгоритма
 	// окажется опорный элемент
@@ -296,14 +307,14 @@ int partition(int* arr, int low, int high, help_data& data)
 	}
 	data.num_of_comp++;
 
-	// ставим опорный элемент в позицию out_ind
+	// ставим опорный элемент в позицию out_pivot_ind
 	data.num_of_swap++;
 	swap(arr[out_pivot_ind], arr[high - 1]);
 
 #ifdef EVERY_STEP_PRINT
 	cout << "\t" << setfill(' ') << setw(3) << high - 1 << " с "
 		<< setfill(' ') << setw(2) <<
-		(out_pivot_ind == 0 ? out_pivot_ind : out_pivot_ind - 1)
+		(out_pivot_ind == 0 ? out_pivot_ind : out_pivot_ind)
 		<< " индекс: ";
 	print_arr(arr, low, high);
 #endif // EVERY_STEP_PRINT
@@ -317,8 +328,13 @@ int partition(int* arr, int low, int high, help_data& data)
 }
 
 // быстрая сортировка
-void quick_sort(int* arr, int low, int high, help_data& data)
+template<typename T = int>
+void quick_sort(T* arr, int low, int high, help_data& data)
 {
+	/*qsort(arr, high, sizeof(T), [](const void* x1, const void* x2) {
+		return (*(int*)x1 - *(int*)x2);
+		});*/
+
 	// если минимальный индекс меньше максимального
 	data.num_of_comp++;
 	if (low < high)
@@ -327,15 +343,15 @@ void quick_sort(int* arr, int low, int high, help_data& data)
 		// определенного индекса, возвращаем
 		// этот индекс
 		int pivot_ind = partition(arr, low, high, data);
-
+	
 		// переставляем левую часть массива
 		// относительно индекса ключевого элемента
-		quick_sort(arr, low, pivot_ind - 1, data);
-
+		quick_sort(arr, low, pivot_ind, data);
+	
 		// переставляем правую часть массива
 		// относительно индекса ключевого элемента
 		quick_sort(arr, pivot_ind + 1, high, data);
-
+	
 		// если нужна пошаговая печать
 #ifdef EVERY_STEP_PRINT
 		cout << "\nлевый: " << low << " правый: " << high << " quick sort: ";
@@ -345,8 +361,70 @@ void quick_sort(int* arr, int low, int high, help_data& data)
 }
 
 /****************************************************************
+*					   К О Н С Т А Н Т Ы						*
+****************************************************************/
+
+// массив функций генерации последовательности
+template<typename T = int>
+void(*gen_funcs[])(T* arr, int low, int high) =
+{
+	f1,
+	f2,
+	randomize_array,
+	read_arr
+};
+
+// названия функций генерации
+const char gen_f_names[4][12] = {
+	"возрастание",
+	"убывание",
+	"случайная",
+	"чтение"
+};
+
+// массив функций сортировки
+template<typename T = int>
+void(*sort_funcs[])(T* arr, int low, int high, help_data& data) =
+{
+	selection_sort,
+	quick_sort
+};
+
+// названия функций сортировки
+const char sort_f_names[2][8] = {
+	"выбором",
+	"быстрая"
+};
+
+/****************************************************************
 *				О С Н О В Н Ы Е   Ф У Н К Ц И И 				*
 ****************************************************************/
+
+//функция измерения времени работы другой функции
+template<typename T>
+TTIME measure_time(
+	T* arr,
+	int size,
+	help_data& data,
+	void(*sort_funcs)(
+		T* arr,
+		int low,
+		int high,
+		help_data& data
+		)
+)
+{
+	// начало отсчета времени
+	auto begin = chrono::steady_clock::now();
+
+	// вызов функции сортировки
+	sort_funcs(arr, 0, size, data);
+
+	// конец отсчета времени
+	auto end = chrono::steady_clock::now();
+
+	return chrono::duration_cast<TTIME>(end - begin);
+}
 
 // функция позволяет увидеть пошаговую работу
 // алгоритма сортировки и выводит число сравнений
@@ -354,7 +432,7 @@ void quick_sort(int* arr, int low, int high, help_data& data)
 void first_part()
 {
 	// считывание типа последовательности
-	int type_of_seq = input_and_check(1, 3,
+	int type_of_gen = input_and_check(1, 3,
 		"Выберете способ генерации последовательности:\n\
 	1. по возрастанию\n\t2. по убыванию\n\t3. случайная\n",
 		"Вводимое значение должно быть 1,2 или 3\n"
@@ -368,23 +446,7 @@ void first_part()
 	arr_deaf = new int[size];	// выделение памяти
 
 	// генерация последовательности в соответствии с вводом
-	switch (type_of_seq)
-	{
-		// по возрастанию
-	case 1:
-		f1(arr, 0, size);
-		break;
-
-		// по убыванию
-	case 2:
-		f2(arr, 0, size);
-		break;
-
-		// случайная
-	case 3:
-		randomize_array(arr, 0, size);
-		break;
-	}
+	gen_funcs<int>[type_of_gen - 1](arr, 0, size);
 
 	// копирование массива. необходимо для вывода
 	copy_arr(arr, arr_deaf, 0, size);
@@ -400,18 +462,7 @@ void first_part()
 	help_data data = { 0,0 };
 
 	// генерация последовательности в соответствии с вводом
-	switch (type_of_alg)
-	{
-		// по возрастанию
-	case 1:
-		selection_sort(arr, 0, size, data);
-		break;
-
-		// по убыванию
-	case 2:
-		quick_sort(arr, 0, size, data);
-		break;
-	}
+	sort_funcs<int>[type_of_alg - 1](arr, 0, size, data);
 
 	// вывод результатов
 	cout << "\n\nНачальный массив: ";
@@ -428,19 +479,84 @@ void first_part()
 	delete[] arr_deaf;
 }
 
-// функция генерирует массивы размерами
-// 1000 10000 100000 1000000
+// создание массива с помощю определенной функции
+template<typename T>
+void generate_arr(T*& arr, int size, int ind_of_gen_func)
+{
+	// выделение памяти
+	arr = new long[size];
+
+	// генерация последовательности
+	gen_funcs<long>[ind_of_gen_func](arr, 0, size);
+}
+
+// сортирует, выводит массив
+template<typename T>
+void draw_table(T* arr, int size, int ind_of_gen_func)
+{
+	// количество сравнений и перестановок
+	help_data data = { 0,0 };
+
+	// отрисовка шапки таблицы
+	cout << OUT_W('_', 78) << '\n';
+	cout << "| ф. генерации | ф. сортировки | размер | время |  сравнения  | перестановки |\n";
+
+	// сортировка и вывод таблицы
+	for (int ind_of_sort_func = 0; ind_of_sort_func < 2; ind_of_sort_func++)
+	{
+		T* arr_copy = new T[size];
+		copy_arr(arr, arr_copy, 0, size);
+
+		// измерение времени работы функции
+		TTIME elapsed_time = measure_time(arr_copy, size, data, sort_funcs<long>[ind_of_sort_func]);
+
+		// вывод строки таблицы
+		cout << "| " << OUT_W(' ', 12) << gen_f_names[ind_of_gen_func]
+			<< " | " << OUT_W(' ', 13) << sort_f_names[ind_of_sort_func]
+			<< " | " << OUT_W(' ', 6) << size
+			<< " | " << OUT_W(' ', 5) << elapsed_time.count()
+			<< " | " << OUT_W(' ', 11) << data.num_of_comp
+			<< " | " << OUT_W(' ', 12) << data.num_of_swap
+			<< " |\n";
+
+		data = { 0,0 };
+
+		delete[] arr_copy;
+	}
+	cout << OUT_W('-', 78) << '\n';
+}
+
+// функция генерирует массивы разными размерами
 // и сортирует их двумя алгоритмами сортировки
 void second_part()
 {
+	// считывание генерирующей функции
+	int ind_of_gen_func = input_and_check(1, 4,
+		"Введите номер генерирующей функции:\n\
+	1. по возрастанию\n\t2. по убыванию\n\t3. случайная\n",
+		"Значения должны быть 1, 2 или 3\n"
+	);
+	// индексы должны начинаться с 0
+	ind_of_gen_func--;
+
+	// массив для последовательности
+	long* arr;
+
 	// 10 раз выполняем генерацию массива и
 	// двух сортировок
 	for (
-		int i = MIN_ARR_SIZE; i <= MAX_ARR_SIZE;
-		i += (MAX_ARR_SIZE - MIN_ARR_SIZE) / NUMB_OF_TABLES
+		int size = MIN_ARR_SIZE; size <= MAX_ARR_SIZE;
+		size += (MAX_ARR_SIZE - MIN_ARR_SIZE) / NUMB_OF_TABLES
 		)
 	{
+		// генерация массива
+		generate_arr(arr, size, ind_of_gen_func);
 
+		// печать таблицы
+		draw_table(arr, size, ind_of_gen_func);
+
+		// удаление массива
+		delete[] arr;
 	}
 }
 
@@ -453,7 +569,7 @@ int main()
 	setlocale(LC_ALL, "ru");
 	srand(time(NULL));
 
-	first_part();
+	//first_part();
 
 	second_part();
 
