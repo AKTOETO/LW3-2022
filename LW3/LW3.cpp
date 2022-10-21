@@ -31,10 +31,10 @@ using namespace std;
 
 // убрать комментарий, если нужна
 // пошаговая печать массивов
-//#define EVERY_STEP_PRINT
+#define EVERY_STEP_PRINT
 
 // количество таблиц в консоли
-#define NUMB_OF_TABLES 10
+#define NUMB_OF_TABLES 5
 
 // заполнение len элементов элементом symb
 #define OUT_W(symb, len) fixed << setfill(symb) << setw(len)
@@ -45,12 +45,12 @@ using namespace std;
 // минимальное и максимальное значение
 // для чисел в массиве
 #define MIN_VALUE 10
-#define MAX_VALUE 2000000
+#define MAX_VALUE 20
 
 // минимальный и максимальный
 // размер массива
-#define MIN_ARR_SIZE 1000
-#define MAX_ARR_SIZE 20000
+#define MIN_ARR_SIZE 10
+#define MAX_ARR_SIZE 15
 
 /********************************
 *	ДЛЯ ПОСЛЕДОВАТЕЛЬНОСТЕЙ		*
@@ -60,16 +60,17 @@ using namespace std;
 #define STEP 1
 
 // максимальное значение при генерации чисел
+// для упорядоченных последовательностей
 #define MAX_GENERATE MAX_VALUE
 
 // необходима для функций сортировки
 struct help_data
 {
 	unsigned long num_of_comp;	// число сравнений
-	int num_of_swap;	// число перемещений
+	unsigned long num_of_swap;	// число перемещений
 };
 
-// тип данных NS
+// тип данных TTIME
 typedef chrono::milliseconds TTIME;
 
 /****************************************************************
@@ -91,15 +92,15 @@ T rand_num(T min, T max)
 // копирование массива
 template<typename T = int>
 void copy_arr(
-	T* arr1,	// источник данных
-	T* arr2,	// место копирования данных
+	T* source,	// источник данных
+	T* target,	// место копирования данных
 	int low,	// индекс начального элемента
 	int high	// индекс элемента после последнего
 )
 {
 	for (int i = low; i < high; i++)
 	{
-		arr2[i] = arr1[i];
+		target[i] = source[i];
 	}
 }
 
@@ -178,12 +179,12 @@ void f2(T* arr, int low, int high)
 	//k, b - коэффициенты прямой
 	T k = MAX_GENERATE / (STEP * (high - low + 1));
 	T b = 0;
-	double x = MAX_GENERATE; // координата x
+	double x = high - low - 1; // координата x
 
 	// заполнение массива 
 	for (int i = low; i < high; i++, x -= STEP)
 	{
-		arr[i] = k * x + b;
+		arr[i] = x * k + b;
 	}
 }
 
@@ -215,7 +216,6 @@ template<typename T = int>
 void selection_sort(T* arr, int low, int high, help_data& data)
 {
 #ifdef EVERY_STEP_PRINT
-	cout << "\nлевый: " << low << " правый: " << high << " partition: \n";
 	cout << "\tдо    изменений: ";
 	print_arr(arr, low, high);
 #endif // EVERY_STEP_PRINT
@@ -311,16 +311,14 @@ int partition(T* arr, int low, int high, help_data& data)
 	data.num_of_swap++;
 	swap(arr[out_pivot_ind], arr[high - 1]);
 
+	// пошаговая печать
 #ifdef EVERY_STEP_PRINT
 	cout << "\t" << setfill(' ') << setw(3) << high - 1 << " с "
 		<< setfill(' ') << setw(2) <<
 		(out_pivot_ind == 0 ? out_pivot_ind : out_pivot_ind)
 		<< " индекс: ";
 	print_arr(arr, low, high);
-#endif // EVERY_STEP_PRINT
 
-	// если нужна пошаговая печать
-#ifdef EVERY_STEP_PRINT
 	cout << "\tпосле  изменен.: ";
 	print_arr(arr, low, high);
 #endif // EVERY_STEP_PRINT
@@ -328,13 +326,16 @@ int partition(T* arr, int low, int high, help_data& data)
 }
 
 // быстрая сортировка
+// не работает с массивом, 
+// размер которого >= 5000
 template<typename T = int>
 void quick_sort(T* arr, int low, int high, help_data& data)
 {
-	/*qsort(arr, high, sizeof(T), [](const void* x1, const void* x2) {
-		return (*(int*)x1 - *(int*)x2);
-		});*/
-
+#ifdef EVERY_STEP_PRINT
+	cout << "\nлевый: " << low << " правый: " << high << "\n";
+	cout << "\tдо    изменений: ";
+	print_arr(arr, low, high);
+#endif // EVERY_STEP_PRINT
 	// если минимальный индекс меньше максимального
 	data.num_of_comp++;
 	if (low < high)
@@ -343,21 +344,108 @@ void quick_sort(T* arr, int low, int high, help_data& data)
 		// определенного индекса, возвращаем
 		// этот индекс
 		int pivot_ind = partition(arr, low, high, data);
-	
+
 		// переставляем левую часть массива
 		// относительно индекса ключевого элемента
 		quick_sort(arr, low, pivot_ind, data);
-	
+
 		// переставляем правую часть массива
 		// относительно индекса ключевого элемента
 		quick_sort(arr, pivot_ind + 1, high, data);
-	
+
 		// если нужна пошаговая печать
 #ifdef EVERY_STEP_PRINT
 		cout << "\nлевый: " << low << " правый: " << high << " quick sort: ";
 		print_arr(arr, low, high);
 #endif // EVERY_STEP_PRINT
 	}
+}
+
+// быстрая сортировка, которая
+// работает с большими размерами массивов
+template<typename T = int>
+void improved_quick_sort(T* arr, int low, int high, help_data& data)
+{
+#ifdef EVERY_STEP_PRINT
+	cout << "\nлевый: " << low << " правый: " << high << "\n";
+	cout << "\tдо    изменений: ";
+	print_arr(arr, low, high);
+#endif // EVERY_STEP_PRINT
+
+	// индекс числа слева от ключевого
+	int i = low;
+	// индекс числа справа от ключевого
+	int j = high - 1;
+	// ключевое число
+	int pivot = arr[(i + j) / 2];
+
+	// переставляем элементы в массиве
+	while (i <= j)
+	{
+		data.num_of_comp++;
+		// двигаем индекс левого числа вправо
+		// если число под левым индексом 
+		// меньше ключевого элемента
+		while (arr[i] < pivot)
+		{
+			data.num_of_comp++;
+			i++;
+		}
+		data.num_of_comp++;
+
+		// двигаем индекс правого числа влево
+		// если число под правым индексом 
+		// больше ключевого элемента
+		while (arr[j] > pivot)
+		{
+			data.num_of_comp++;
+			j--;
+		}
+		data.num_of_comp++;
+
+		// если индекс левого числа <= 
+		// индексу правого, то меняем
+		// значения под этими индексами
+		// и сдвигаем иба индекса к центру
+		// отрезка (low, high)
+		if (i <= j)
+		{
+			swap(arr[i], arr[j]);
+#ifdef EVERY_STEP_PRINT
+			cout << "\t" << setfill(' ') << setw(3) << i << " с "
+				<< setfill(' ') << setw(2) << j << " индекс: ";
+			print_arr(arr, low, high);
+#endif // EVERY_STEP_PRINT
+			data.num_of_swap++;
+			i++;
+			j--;
+
+		}
+		data.num_of_comp++;
+	}
+	data.num_of_comp++;
+
+	// пошаговая печать
+#ifdef EVERY_STEP_PRINT
+	cout << "\tпосле  изменен.: ";
+	print_arr(arr, low, high);
+#endif // EVERY_STEP_PRINT
+
+	// если правый индекс не дошел до
+	// начала отрезка (low, high)
+	if (j > low)
+	{
+		improved_quick_sort(arr, low, j, data);
+	}
+	data.num_of_comp++;
+
+	// если левый индекс не дошел до
+	// конца отрезка (low, high)
+	if (i < high)
+	{
+		improved_quick_sort(arr, i, high, data);
+	}
+	data.num_of_comp++;
 }
 
 /****************************************************************
@@ -387,7 +475,8 @@ template<typename T = int>
 void(*sort_funcs[])(T* arr, int low, int high, help_data& data) =
 {
 	selection_sort,
-	quick_sort
+	//quick_sort
+	improved_quick_sort
 };
 
 // названия функций сортировки
@@ -431,6 +520,10 @@ TTIME measure_time(
 // и перестановок
 void first_part()
 {
+	cout << OUT_W('=', 27) << '\n';
+	cout << "||\tПЕРВЫЙ ЭТАП" << "\t||\n";
+	cout << OUT_W('=', 27) << '\n';
+
 	// считывание типа последовательности
 	int type_of_gen = input_and_check(1, 3,
 		"Выберете способ генерации последовательности:\n\
@@ -465,14 +558,14 @@ void first_part()
 	sort_funcs<int>[type_of_alg - 1](arr, 0, size, data);
 
 	// вывод результатов
-	cout << "\n\nНачальный массив: ";
+	cout << "\nНачальный массив: ";
 	print_arr(arr_deaf, 0, size);
 
 	cout << "Конечный  массив: ";
 	print_arr(arr, 0, size);
 
 	cout << "Число  сравнений: " << data.num_of_comp << '\n';
-	cout << "Число  пересылок: " << data.num_of_swap << '\n';
+	cout << "Число  пересылок: " << data.num_of_swap << "\n\n\n";
 
 	// очистка памяти
 	delete[] arr;
@@ -498,12 +591,13 @@ void draw_table(T* arr, int size, int ind_of_gen_func)
 	help_data data = { 0,0 };
 
 	// отрисовка шапки таблицы
-	cout << OUT_W('_', 78) << '\n';
-	cout << "| ф. генерации | ф. сортировки | размер | время |  сравнения  | перестановки |\n";
+	cout << OUT_W('_', 84) << '\n';
+	cout << "|_ф._генерации_|_ф._сортировки_|_размер_|_время_(мс)_|__сравнения__|_перестановки_|\n";
 
 	// сортировка и вывод таблицы
 	for (int ind_of_sort_func = 0; ind_of_sort_func < 2; ind_of_sort_func++)
 	{
+		// создание копии массива
 		T* arr_copy = new T[size];
 		copy_arr(arr, arr_copy, 0, size);
 
@@ -514,22 +608,25 @@ void draw_table(T* arr, int size, int ind_of_gen_func)
 		cout << "| " << OUT_W(' ', 12) << gen_f_names[ind_of_gen_func]
 			<< " | " << OUT_W(' ', 13) << sort_f_names[ind_of_sort_func]
 			<< " | " << OUT_W(' ', 6) << size
-			<< " | " << OUT_W(' ', 5) << elapsed_time.count()
+			<< " | " << OUT_W(' ', 10) << elapsed_time.count()
 			<< " | " << OUT_W(' ', 11) << data.num_of_comp
 			<< " | " << OUT_W(' ', 12) << data.num_of_swap
 			<< " |\n";
-
 		data = { 0,0 };
 
 		delete[] arr_copy;
 	}
-	cout << OUT_W('-', 78) << '\n';
+	cout << OUT_W('-', 84) << '\n';
 }
 
 // функция генерирует массивы разными размерами
 // и сортирует их двумя алгоритмами сортировки
 void second_part()
 {
+	cout << OUT_W('=', 27) << '\n';
+	cout << "||\tВТОРОЙ ЭТАП" << "\t||\n";
+	cout << OUT_W('=', 27) << '\n';
+
 	// считывание генерирующей функции
 	int ind_of_gen_func = input_and_check(1, 4,
 		"Введите номер генерирующей функции:\n\
@@ -569,7 +666,7 @@ int main()
 	setlocale(LC_ALL, "ru");
 	srand(time(NULL));
 
-	//first_part();
+	first_part();
 
 	second_part();
 
