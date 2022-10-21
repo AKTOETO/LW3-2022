@@ -7,7 +7,7 @@
 *	Language     : c/c++												*
 *	Programmers  : Плоцкий Б.А. Раужев Ю. М.							*
 *	Created      :  19/10/22											*
-*	Last revision:  /10/22											*
+*	Last revision:  21/10/22											*
 *	Comment(s)   : Вариант № 1											*
 * 																		*
 *	Для массива из n элементов выполнить сортировку с помощью двух		*
@@ -31,7 +31,7 @@ using namespace std;
 
 // убрать комментарий, если нужна
 // пошаговая печать массивов
-#define EVERY_STEP_PRINT
+//#define EVERY_STEP_PRINT
 
 // количество таблиц в консоли
 #define NUMB_OF_TABLES 5
@@ -42,6 +42,9 @@ using namespace std;
 /********************************
 *			ДЛЯ МАССИВА			*
 ********************************/
+
+#ifdef EVERY_STEP_PRINT
+// ЕСЛИ НУЖНА ПЕЧАТЬ КАЖДОГО ШАГА
 // минимальное и максимальное значение
 // для чисел в массиве
 #define MIN_VALUE 10
@@ -51,6 +54,19 @@ using namespace std;
 // размер массива
 #define MIN_ARR_SIZE 10
 #define MAX_ARR_SIZE 15
+
+#else
+// ЕСЛИ НЕ НУЖНА ПЕЧАТЬ КАЖДОГО ШАГА
+// минимальное и максимальное значение
+// для чисел в массиве
+#define MIN_VALUE 10
+#define MAX_VALUE 20000
+
+// минимальный и максимальный
+// размер массива
+#define MIN_ARR_SIZE 1000
+#define MAX_ARR_SIZE 15000
+#endif
 
 /********************************
 *	ДЛЯ ПОСЛЕДОВАТЕЛЬНОСТЕЙ		*
@@ -435,7 +451,7 @@ void improved_quick_sort(T* arr, int low, int high, help_data& data)
 	// начала отрезка (low, high)
 	if (j > low)
 	{
-		improved_quick_sort(arr, low, j, data);
+		improved_quick_sort(arr, low, j + 1, data);
 	}
 	data.num_of_comp++;
 
