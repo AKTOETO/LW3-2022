@@ -7,7 +7,7 @@
 *	Language     : c/c++												*
 *	Programmers  : Плоцкий Б.А. Раужев Ю. М.							*
 *	Created      :  19/10/22											*
-*	Last revision:  21/10/22											*
+*	Last revision:  23/10/22											*
 *	Comment(s)   : Вариант № 1											*
 * 																		*
 *	Для массива из n элементов выполнить сортировку с помощью двух		*
@@ -31,7 +31,7 @@ using namespace std;
 // убрать комментарий, если нужна
 // пошаговая печать массивов
 // РАСКОММЕНТИРОВАТЬ ДЛЯ ПЕРВОГО ЭТАПА
-#define EVERY_STEP_PRINT
+//#define EVERY_STEP_PRINT
 
 // количество таблиц в консоли
 #define NUMB_OF_TABLES 4
@@ -65,7 +65,7 @@ using namespace std;
 // минимальный и максимальный
 // размер массива
 #define MIN_ARR_SIZE 1000
-#define MAX_ARR_SIZE 3000//100000
+#define MAX_ARR_SIZE 500000//100000
 #endif
 
 /********************************
@@ -82,8 +82,8 @@ using namespace std;
 // необходима для функций сортировки
 struct help_data
 {
-	unsigned long num_of_comp;	// число сравнений
-	unsigned long num_of_swap;	// число перемещений
+	unsigned int num_of_comp;	// число сравнений
+	unsigned int num_of_swap;	// число перемещений
 };
 
 // тип данных TTIME
@@ -261,8 +261,8 @@ template<typename T = int>
 void(*sort_funcs[])(T* arr, int low, int high, help_data& data) =
 {
 	selection_sort,
-	quick_sort
-	//improved_quick_sort
+	//quick_sort
+	improved_quick_sort
 };
 
 // названия функций сортировки
@@ -440,7 +440,7 @@ void selection_sort(T* arr, int low, int high, help_data& data)
 #endif // EVERY_STEP_PRINT
 
 	// проходимся по всем элементам массива
-	// кроме последнего он уже будет в
+	// кроме последнего, он уже будет в
 	// нужном порядке, когда мы дойдем до него
 	for (int i = low; i < high - 1; i++)
 	{
@@ -597,7 +597,7 @@ void improved_quick_sort(T* arr, int low, int high, help_data& data)
 	// индекс числа справа от ключевого
 	int j = high - 1;
 	// ключевое число
-	int pivot = arr[(i + j) / 2];
+	T pivot = arr[(i + j) / 2];
 
 	// переставляем элементы в массиве
 	while (i <= j)
@@ -606,9 +606,9 @@ void improved_quick_sort(T* arr, int low, int high, help_data& data)
 		// двигаем индекс левого числа вправо
 		// если число под левым индексом 
 		// меньше ключевого элемента
-		while (arr[i] < pivot)
+		while ((arr[i] < pivot) && (i < high))
 		{
-			data.num_of_comp++;
+			data.num_of_comp += 2;
 			i++;
 		}
 		data.num_of_comp++;
@@ -616,9 +616,9 @@ void improved_quick_sort(T* arr, int low, int high, help_data& data)
 		// двигаем индекс правого числа влево
 		// если число под правым индексом 
 		// больше ключевого элемента
-		while (arr[j] > pivot)
+		while ((arr[j] > pivot) && (j > low))
 		{
-			data.num_of_comp++;
+			data.num_of_comp += 2;
 			j--;
 		}
 		data.num_of_comp++;
@@ -667,8 +667,6 @@ void improved_quick_sort(T* arr, int low, int high, help_data& data)
 	}
 	data.num_of_comp++;
 }
-
-
 
 /****************************************************************
 *				О С Н О В Н Ы Е   Ф У Н К Ц И И 				*
@@ -761,11 +759,15 @@ void first_part()
 template<typename T>
 void generate_arr(T*& arr, int size, int ind_of_gen_func)
 {
+	// удаление массива
+	if (arr != nullptr)
+		delete[] arr;
+
 	// выделение памяти
-	arr = new long[size];
+	arr = new T[size];
 
 	// генерация последовательности
-	gen_funcs<long>[ind_of_gen_func](arr, 0, size);
+	gen_funcs<T>[ind_of_gen_func](arr, 0, size);
 }
 
 // сортирует, выводит массив
@@ -787,7 +789,7 @@ void draw_table(T* arr, int size, int ind_of_gen_func)
 		copy_arr(arr, arr_copy, 0, size);
 
 		// измерение времени работы функции
-		TTIME elapsed_time = measure_time(arr_copy, size, data, sort_funcs<long>[ind_of_sort_func]);
+		TTIME elapsed_time = measure_time(arr_copy, size, data, sort_funcs<T>[ind_of_sort_func]);
 
 		// вывод строки таблицы
 		cout << "| " << OUT_W(' ', 12) << gen_f_names[ind_of_gen_func]
@@ -822,24 +824,20 @@ void second_part()
 	ind_of_gen_func--;
 
 	// массив для последовательности
-	long* arr;
+	int* arr = nullptr;
 
 	// 10 раз выполняем генерацию массива и
 	// двух сортировок
 	for (
 		int size = MIN_ARR_SIZE; size <= MAX_ARR_SIZE;
-		size += (MAX_ARR_SIZE - MIN_ARR_SIZE) / NUMB_OF_TABLES
+		size += (MAX_ARR_SIZE - MIN_ARR_SIZE) / (NUMB_OF_TABLES - 1)
 		)
 	{
-
 		// генерация массива
 		generate_arr(arr, size, ind_of_gen_func);
 
 		// печать таблицы
 		draw_table(arr, size, ind_of_gen_func);
-
-		// удаление массива
-		delete[] arr;
 	}
 }
 /**************** End Of main.cpp File ***************/
