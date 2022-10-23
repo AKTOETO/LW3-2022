@@ -7,7 +7,7 @@
 *	Language     : c/c++												*
 *	Programmers  : Плоцкий Б.А. Раужев Ю. М.							*
 *	Created      :  19/10/22											*
-*	Last revision:  23/10/22											*
+*	Last revision:  24/10/22											*
 *	Comment(s)   : Вариант № 1											*
 * 																		*
 *	Для массива из n элементов выполнить сортировку с помощью двух		*
@@ -34,7 +34,7 @@ using namespace std;
 //#define EVERY_STEP_PRINT
 
 // количество таблиц в консоли
-#define NUMB_OF_TABLES 4
+#define NUMB_OF_TABLES 5
 
 // заполнение len элементов элементом symb
 #define OUT_W(symb, len) fixed << setfill(symb) << setw(len)
@@ -65,7 +65,7 @@ using namespace std;
 // минимальный и максимальный
 // размер массива
 #define MIN_ARR_SIZE 1000
-#define MAX_ARR_SIZE 500000//100000
+#define MAX_ARR_SIZE 500000
 #endif
 
 /********************************
@@ -79,7 +79,8 @@ using namespace std;
 // для упорядоченных последовательностей
 #define MAX_GENERATE MAX_VALUE
 
-// необходима для функций сортировки
+// необходима для хранения значений 
+// сравнений и перемещений
 struct help_data
 {
 	unsigned int num_of_comp;	// число сравнений
@@ -145,6 +146,35 @@ void randomize_array(T* arr, int low, int high);
 template<typename T = int>
 void read_arr(T* arr, int low, int high);
 
+//функция измерения времени работы другой функции
+template<typename T>
+TTIME measure_time(
+	T* arr,				// исходный массив
+	int size,			// размер массива
+	help_data& data,	//количество сравнений и премещений
+	void(*sort_funcs)(
+		T* arr,			// массив
+		int low,		// индекс, с которого начинается вывод
+		int high,		// индекс, на котром кончается вывод
+		help_data& data	// количество сравнений и премещений
+		)
+);
+
+// создание массива с помощю определенной функции
+template<typename T>
+void generate_arr(
+	T*& arr,			// массив
+	int size,			// размер массива
+	int ind_of_gen_func	// индекс функции генерации массива
+);
+
+// сортирует, выводит массив
+template<typename T>
+void draw_table(
+	T* arr,			// массив
+	int size,			// размер массива
+	int ind_of_gen_func	// индекс функции генерации массива
+);
 /****************************************************************
 *				C О Р Т И Р О В К А   В Ы Б О Р О М				*
 ****************************************************************/
@@ -153,7 +183,7 @@ template<typename T = int>
 void selection_sort(
 	T* arr,			// массив
 	int low,		// индекс, с которого начинается вывод
-	int high,		// индекс, на котром кончается вывод
+	int high,		// индекс, на котором кончается вывод
 	help_data& data	// количество сравнений и премещений
 );
 
@@ -195,35 +225,6 @@ void improved_quick_sort(
 *				О С Н О В Н Ы Е   Ф У Н К Ц И И 				*
 ****************************************************************/
 
-//функция измерения времени работы другой функции
-template<typename T>
-TTIME measure_time(
-	T* arr,				// исходный массив
-	int size,			// размер массива
-	help_data& data,	//количество сравнений и премещений
-	void(*sort_funcs)(
-		T* arr,			// массив
-		int low,		// индекс, с которого начинается вывод
-		int high,		// индекс, на котром кончается вывод
-		help_data& data	// количество сравнений и премещений
-		)
-);
-
-// создание массива с помощю определенной функции
-template<typename T>
-void generate_arr(
-	T*& arr,			// массив
-	int size,			// размер массива
-	int ind_of_gen_func	// индекс функции генерации массива
-);
-
-// сортирует, выводит массив
-template<typename T>
-void draw_table(
-	T* arr,			// массив
-	int size,			// размер массива
-	int ind_of_gen_func	// индекс функции генерации массива
-);
 
 // функция позволяет увидеть пошаговую работу
 // алгоритма сортировки и выводит число сравнений
@@ -371,6 +372,83 @@ T input_and_check(T _min, T _max,
 	return num;
 }
 
+//функция измерения времени работы другой функции
+template<typename T>
+TTIME measure_time(
+	T* arr,
+	int size,
+	help_data& data,
+	void(*sort_funcs)(
+		T* arr,
+		int low,
+		int high,
+		help_data& data
+		)
+)
+{
+	// начало отсчета времени
+	auto begin = chrono::steady_clock::now();
+
+	// вызов функции сортировки
+	sort_funcs(arr, 0, size, data);
+
+	// конец отсчета времени
+	auto end = chrono::steady_clock::now();
+
+	return chrono::duration_cast<TTIME>(end - begin);
+}
+
+// создание массива с помощю определенной функции
+template<typename T>
+void generate_arr(T*& arr, int size, int ind_of_gen_func)
+{
+	// удаление массива
+	if (arr != nullptr)
+		delete[] arr;
+
+	// выделение памяти
+	arr = new T[size];
+
+	// генерация последовательности
+	gen_funcs<T>[ind_of_gen_func](arr, 0, size);
+}
+
+// сортирует, выводит массив
+template<typename T>
+void draw_table(T* arr, int size, int ind_of_gen_func)
+{
+	// количество сравнений и перестановок
+	help_data data = { 0,0 };
+
+	// отрисовка шапки таблицы
+	//cout << OUT_W('_', 84) << '\n';
+	//cout << "|_ф._генерации_|_ф._сортировки_|_размер_|_время_(мс)_|__сравнения__|_перестановки_|\n";
+
+	// сортировка и вывод таблицы
+	for (int ind_of_sort_func = 0; ind_of_sort_func < 2; ind_of_sort_func++)
+	{
+		// создание копии массива
+		T* arr_copy = new T[size];
+		copy_arr(arr, arr_copy, 0, size);
+
+		// измерение времени работы функции
+		TTIME elapsed_time = measure_time(arr_copy, size, data, sort_funcs<T>[ind_of_sort_func]);
+
+		// вывод строки таблицы
+		cout << "| " << OUT_W(' ', 12) << gen_f_names[ind_of_gen_func]
+			<< " | " << OUT_W(' ', 13) << sort_f_names[ind_of_sort_func]
+			<< " | " << OUT_W(' ', 6) << size
+			<< " | " << OUT_W(' ', 10) << elapsed_time.count()
+			<< " | " << OUT_W(' ', 11) << data.num_of_comp
+			<< " | " << OUT_W(' ', 12) << data.num_of_swap
+			<< " |\n";
+		data = { 0,0 };
+
+		delete[] arr_copy;
+	}
+	//cout << OUT_W('-', 84) << '\n';
+}
+
 /****************************************************************
 *	Г Е Н Е Р А Ц И Я   П О С Л Е Д О В А Т Е Л Ь Н О С Т Е Й	*
 ****************************************************************/
@@ -455,8 +533,8 @@ void selection_sort(T* arr, int low, int high, help_data& data)
 		{
 			data.num_of_comp++;
 
-			// если был найдем элемент,
-			// который меньше элемнта под
+			// если был найден элемент,
+			// который меньше элемента под
 			// индексом smallestIndex, то
 			// обновляем smallestIndex
 			data.num_of_comp++;
@@ -495,12 +573,12 @@ int partition(T* arr, int low, int high, help_data& data)
 	print_arr(arr, low, high);
 #endif // EVERY_STEP_PRINT
 
-	// опорный элемент
-	T pivot = arr[high - 1];
-
 	// индекс, в которм в конце алгоритма
 	// окажется опорный элемент
 	int out_pivot_ind = low;
+
+	// опорный элемент
+	T pivot = arr[high - 1];
 
 	for (int i = low; i < high - 1; i++)
 	{
@@ -517,9 +595,9 @@ int partition(T* arr, int low, int high, help_data& data)
 
 			// если нужна пошаговая печать
 #ifdef EVERY_STEP_PRINT
-			cout << "\t" << setfill(' ') << setw(3) << i << " с "
+			cout << "\t" << setfill(' ') << setw(3) << i - low << " с "
 				<< setfill(' ') << setw(2) <<
-				(out_pivot_ind == 0 ? out_pivot_ind : out_pivot_ind - 1)
+				(out_pivot_ind == 0 ? out_pivot_ind : out_pivot_ind - 1) - low
 				<< " индекс: ";
 			print_arr(arr, low, high);
 #endif // EVERY_STEP_PRINT
@@ -593,33 +671,33 @@ void improved_quick_sort(T* arr, int low, int high, help_data& data)
 #endif // EVERY_STEP_PRINT
 
 	// индекс числа слева от ключевого
-	int i = low;
+	int left = low;
 	// индекс числа справа от ключевого
-	int j = high - 1;
+	int right = high - 1;
 	// ключевое число
-	T pivot = arr[(i + j) / 2];
+	T key = arr[(left + right) / 2];
 
 	// переставляем элементы в массиве
-	while (i <= j)
+	while (left <= right)
 	{
 		data.num_of_comp++;
 		// двигаем индекс левого числа вправо
 		// если число под левым индексом 
 		// меньше ключевого элемента
-		while ((arr[i] < pivot) && (i < high))
+		while (arr[left] < key)
 		{
-			data.num_of_comp += 2;
-			i++;
+			data.num_of_comp ++;
+			left++;
 		}
 		data.num_of_comp++;
 
 		// двигаем индекс правого числа влево
 		// если число под правым индексом 
 		// больше ключевого элемента
-		while ((arr[j] > pivot) && (j > low))
+		while (arr[right] > key)
 		{
-			data.num_of_comp += 2;
-			j--;
+			data.num_of_comp ++;
+			right--;
 		}
 		data.num_of_comp++;
 
@@ -628,18 +706,17 @@ void improved_quick_sort(T* arr, int low, int high, help_data& data)
 		// значения под этими индексами
 		// и сдвигаем иба индекса к центру
 		// отрезка (low, high)
-		if (i <= j)
+		if (left <= right)
 		{
-			swap(arr[i], arr[j]);
+			swap(arr[left], arr[right]);
 #ifdef EVERY_STEP_PRINT
-			cout << "\t" << setfill(' ') << setw(3) << i << " с "
-				<< setfill(' ') << setw(2) << j << " индекс: ";
+			cout << "\t" << setfill(' ') << setw(3) << left - low << " с "
+				<< setfill(' ') << setw(2) << right - low << " индекс: ";
 			print_arr(arr, low, high);
 #endif // EVERY_STEP_PRINT
 			data.num_of_swap++;
-			i++;
-			j--;
-
+			left++;
+			right--;
 		}
 		data.num_of_comp++;
 	}
@@ -653,17 +730,17 @@ void improved_quick_sort(T* arr, int low, int high, help_data& data)
 
 	// если правый индекс не дошел до
 	// начала отрезка (low, high)
-	if (j > low)
+	if (right > low)
 	{
-		improved_quick_sort(arr, low, j + 1, data);
+		improved_quick_sort(arr, low, right + 1, data);
 	}
 	data.num_of_comp++;
 
 	// если левый индекс не дошел до
 	// конца отрезка (low, high)
-	if (i < high)
+	if (left < high)
 	{
-		improved_quick_sort(arr, i, high, data);
+		improved_quick_sort(arr, left, high, data);
 	}
 	data.num_of_comp++;
 }
@@ -671,32 +748,6 @@ void improved_quick_sort(T* arr, int low, int high, help_data& data)
 /****************************************************************
 *				О С Н О В Н Ы Е   Ф У Н К Ц И И 				*
 ****************************************************************/
-
-//функция измерения времени работы другой функции
-template<typename T>
-TTIME measure_time(
-	T* arr,
-	int size,
-	help_data& data,
-	void(*sort_funcs)(
-		T* arr,
-		int low,
-		int high,
-		help_data& data
-		)
-)
-{
-	// начало отсчета времени
-	auto begin = chrono::steady_clock::now();
-
-	// вызов функции сортировки
-	sort_funcs(arr, 0, size, data);
-
-	// конец отсчета времени
-	auto end = chrono::steady_clock::now();
-
-	return chrono::duration_cast<TTIME>(end - begin);
-}
 
 // функция позволяет увидеть пошаговую работу
 // алгоритма сортировки и выводит число сравнений
@@ -714,15 +765,14 @@ void first_part()
 		"Вводимое значение должно быть 1,2 или 3\n"
 	);
 
-	int* arr;		// массив для сортировки
-	int* arr_deaf;	// массив с изначальной полседовательностью
+	int* arr = nullptr;		// массив для сортировки
+	int* arr_deaf = nullptr;	// массив с изначальной полседовательностью
 	int size = 15;	// размер массивов
 
-	arr = new int[size];	// выделение памяти
-	arr_deaf = new int[size];	// выделение памяти
+	// создание массива с полседовательностью
+	generate_arr(arr, size, type_of_gen - 1);
 
-	// генерация последовательности в соответствии с вводом
-	gen_funcs<int>[type_of_gen - 1](arr, 0, size);
+	arr_deaf = new int[size];	// выделение памяти
 
 	// копирование массива. необходимо для вывода
 	copy_arr(arr, arr_deaf, 0, size);
@@ -755,57 +805,6 @@ void first_part()
 	delete[] arr_deaf;
 }
 
-// создание массива с помощю определенной функции
-template<typename T>
-void generate_arr(T*& arr, int size, int ind_of_gen_func)
-{
-	// удаление массива
-	if (arr != nullptr)
-		delete[] arr;
-
-	// выделение памяти
-	arr = new T[size];
-
-	// генерация последовательности
-	gen_funcs<T>[ind_of_gen_func](arr, 0, size);
-}
-
-// сортирует, выводит массив
-template<typename T>
-void draw_table(T* arr, int size, int ind_of_gen_func)
-{
-	// количество сравнений и перестановок
-	help_data data = { 0,0 };
-
-	// отрисовка шапки таблицы
-	cout << OUT_W('_', 84) << '\n';
-	cout << "|_ф._генерации_|_ф._сортировки_|_размер_|_время_(мс)_|__сравнения__|_перестановки_|\n";
-
-	// сортировка и вывод таблицы
-	for (int ind_of_sort_func = 0; ind_of_sort_func < 2; ind_of_sort_func++)
-	{
-		// создание копии массива
-		T* arr_copy = new T[size];
-		copy_arr(arr, arr_copy, 0, size);
-
-		// измерение времени работы функции
-		TTIME elapsed_time = measure_time(arr_copy, size, data, sort_funcs<T>[ind_of_sort_func]);
-
-		// вывод строки таблицы
-		cout << "| " << OUT_W(' ', 12) << gen_f_names[ind_of_gen_func]
-			<< " | " << OUT_W(' ', 13) << sort_f_names[ind_of_sort_func]
-			<< " | " << OUT_W(' ', 6) << size
-			<< " | " << OUT_W(' ', 10) << elapsed_time.count()
-			<< " | " << OUT_W(' ', 11) << data.num_of_comp
-			<< " | " << OUT_W(' ', 12) << data.num_of_swap
-			<< " |\n";
-		data = { 0,0 };
-
-		delete[] arr_copy;
-	}
-	cout << OUT_W('-', 84) << '\n';
-}
-
 // функция генерирует массивы разными размерами
 // и сортирует их двумя алгоритмами сортировки
 void second_part()
@@ -824,10 +823,10 @@ void second_part()
 	ind_of_gen_func--;
 
 	// массив для последовательности
-	int* arr = nullptr;
+	unsigned int* arr = nullptr;
 
-	// 10 раз выполняем генерацию массива и
-	// двух сортировок
+	// выполняем генерацию массива и
+	// выполняем сортировки
 	for (
 		int size = MIN_ARR_SIZE; size <= MAX_ARR_SIZE;
 		size += (MAX_ARR_SIZE - MIN_ARR_SIZE) / (NUMB_OF_TABLES - 1)
@@ -840,4 +839,5 @@ void second_part()
 		draw_table(arr, size, ind_of_gen_func);
 	}
 }
+
 /**************** End Of main.cpp File ***************/
