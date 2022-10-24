@@ -31,7 +31,7 @@ using namespace std;
 // убрать комментарий, если нужна
 // пошаговая печать массивов
 // РАСКОММЕНТИРОВАТЬ ДЛЯ ПЕРВОГО ЭТАПА
-//#define EVERY_STEP_PRINT
+#define EVERY_STEP_PRINT
 
 // количество таблиц в консоли
 #define NUMB_OF_TABLES 5
@@ -83,8 +83,8 @@ using namespace std;
 // сравнений и перемещений
 struct help_data
 {
-	unsigned int num_of_comp;	// число сравнений
-	unsigned int num_of_swap;	// число перемещений
+	unsigned long long num_of_comp;	// число сравнений
+	unsigned long long num_of_swap;	// число перемещений
 };
 
 // тип данных TTIME
@@ -421,8 +421,8 @@ void draw_table(T* arr, int size, int ind_of_gen_func)
 	help_data data = { 0,0 };
 
 	// отрисовка шапки таблицы
-	//cout << OUT_W('_', 84) << '\n';
-	//cout << "|_ф._генерации_|_ф._сортировки_|_размер_|_время_(мс)_|__сравнения__|_перестановки_|\n";
+	cout << OUT_W('_', 84) << '\n';
+	cout << "|_ф._генерации_|_ф._сортировки_|_размер_|_время_(мс)_|__сравнения__|_перестановки_|\n";
 
 	// сортировка и вывод таблицы
 	for (int ind_of_sort_func = 0; ind_of_sort_func < 2; ind_of_sort_func++)
@@ -446,7 +446,7 @@ void draw_table(T* arr, int size, int ind_of_gen_func)
 
 		delete[] arr_copy;
 	}
-	//cout << OUT_W('-', 84) << '\n';
+	cout << OUT_W('-', 84) << '\n';
 }
 
 /****************************************************************
@@ -522,8 +522,6 @@ void selection_sort(T* arr, int low, int high, help_data& data)
 	// нужном порядке, когда мы дойдем до него
 	for (int i = low; i < high - 1; i++)
 	{
-		data.num_of_comp++;
-
 		// индекс наименьшего элемента
 		int smallestIndex = i;
 
@@ -531,8 +529,6 @@ void selection_sort(T* arr, int low, int high, help_data& data)
 		// чем под индексом smallestIndex
 		for (int j = i + 1; j < high; j++)
 		{
-			data.num_of_comp++;
-
 			// если был найден элемент,
 			// который меньше элемента под
 			// индексом smallestIndex, то
@@ -543,7 +539,6 @@ void selection_sort(T* arr, int low, int high, help_data& data)
 				smallestIndex = j;
 			}
 		}
-		data.num_of_comp++;
 
 		// меняем местами текущий элемент и наименьший 
 		data.num_of_swap++;
@@ -556,7 +551,6 @@ void selection_sort(T* arr, int low, int high, help_data& data)
 		print_arr(arr, low, high);
 #endif // EVERY_STEP_PRINT
 	}
-	data.num_of_comp++;
 }
 
 /****************************************************************
@@ -582,7 +576,6 @@ int partition(T* arr, int low, int high, help_data& data)
 
 	for (int i = low; i < high - 1; i++)
 	{
-		data.num_of_comp++;
 
 		// если текущий элемент меньше опорного
 		data.num_of_comp++;
@@ -603,7 +596,6 @@ int partition(T* arr, int low, int high, help_data& data)
 #endif // EVERY_STEP_PRINT
 		}
 	}
-	data.num_of_comp++;
 
 	// ставим опорный элемент в позицию out_pivot_ind
 	data.num_of_swap++;
@@ -635,7 +627,6 @@ void quick_sort(T* arr, int low, int high, help_data& data)
 	print_arr(arr, low, high);
 #endif // EVERY_STEP_PRINT
 	// если минимальный индекс меньше максимального
-	data.num_of_comp++;
 	if (low < high)
 	{
 		// переставляем элементы относительно 
@@ -680,13 +671,12 @@ void improved_quick_sort(T* arr, int low, int high, help_data& data)
 	// переставляем элементы в массиве
 	while (left <= right)
 	{
-		data.num_of_comp++;
 		// двигаем индекс левого числа вправо
 		// если число под левым индексом 
 		// меньше ключевого элемента
 		while (arr[left] < key)
 		{
-			data.num_of_comp ++;
+			data.num_of_comp++;
 			left++;
 		}
 		data.num_of_comp++;
@@ -696,7 +686,7 @@ void improved_quick_sort(T* arr, int low, int high, help_data& data)
 		// больше ключевого элемента
 		while (arr[right] > key)
 		{
-			data.num_of_comp ++;
+			data.num_of_comp++;
 			right--;
 		}
 		data.num_of_comp++;
@@ -709,18 +699,17 @@ void improved_quick_sort(T* arr, int low, int high, help_data& data)
 		if (left <= right)
 		{
 			swap(arr[left], arr[right]);
+			data.num_of_swap++;
 #ifdef EVERY_STEP_PRINT
 			cout << "\t" << setfill(' ') << setw(3) << left - low << " с "
 				<< setfill(' ') << setw(2) << right - low << " индекс: ";
 			print_arr(arr, low, high);
 #endif // EVERY_STEP_PRINT
-			data.num_of_swap++;
 			left++;
 			right--;
 		}
 		data.num_of_comp++;
 	}
-	data.num_of_comp++;
 
 	// пошаговая печать
 #ifdef EVERY_STEP_PRINT
@@ -734,7 +723,6 @@ void improved_quick_sort(T* arr, int low, int high, help_data& data)
 	{
 		improved_quick_sort(arr, low, right + 1, data);
 	}
-	data.num_of_comp++;
 
 	// если левый индекс не дошел до
 	// конца отрезка (low, high)
@@ -742,7 +730,6 @@ void improved_quick_sort(T* arr, int low, int high, help_data& data)
 	{
 		improved_quick_sort(arr, left, high, data);
 	}
-	data.num_of_comp++;
 }
 
 /****************************************************************
